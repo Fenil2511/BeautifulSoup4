@@ -17,18 +17,20 @@ your document the way it does.
 import os
 import sys
 from bs4 import BeautifulSoup
+from bleach import clean
+
 parsers = ['html.parser']
 
 try:
     from bs4.builder import _lxml
     parsers.append('lxml')
-except ImportError, e:
+except ImportError as e:
     pass
 
 try:
     from bs4.builder import _html5lib
     parsers.append('html5lib')
-except ImportError, e:
+except ImportError as e:
     pass
 
 class Demonstration(object):
@@ -41,13 +43,14 @@ class Demonstration(object):
         previous_output = None
         for parser in parser_names:
             try:
-                soup = BeautifulSoup(self.markup, parser)
-                if markup.startswith("<div>"):
+                cleaned_markup = clean(self.markup)
+                soup = BeautifulSoup(cleaned_markup, parser)
+                if cleaned_markup.startswith("<div>"):
                     # Extract the interesting part
                     output = soup.div
                 else:
                     output = soup
-            except Exception, e:
+            except Exception as e:
                 output = "[EXCEPTION] %s" % str(e)
             self.results[parser] = output
             if previous_output is None:
@@ -57,15 +60,15 @@ class Demonstration(object):
         return uniform_results
 
     def dump(self):
-        print "%s: %s" % ("Markup".rjust(13), self.markup.encode("utf8"))
+        print("%s: %s" % ("Markup".rjust(13), self.markup.encode("utf8")))
         for parser, output in self.results.items():
-            print "%s: %s" % (parser.rjust(13), output.encode("utf8"))
+            print("%s: %s" % (parser.rjust(13), output.encode("utf8")))
 
 different_results = []
 uniform_results = []
 
-print "= Testing the following parsers: %s =" % ", ".join(parsers)
-print
+print("= Testing the following parsers: %s =" % ", ".join(parsers))
+print()
 
 input_file = sys.stdin
 if sys.stdin.isatty():
@@ -83,13 +86,14 @@ for markup in input_file:
     else:
         different_results.append(demo)
 
-print "== Markup that's handled the same in every parser =="
-print
+print("== Markup that's handled the same in every parser ==")
+print()
 for demo in uniform_results:
     demo.dump()
-    print
-print "== Markup that's not handled the same in every parser =="
-print
+    print()
+
+print("== Markup that's not handled the same in every parser ==")
+print()
 for demo in different_results:
     demo.dump()
-    print
+    print()
